@@ -1,5 +1,4 @@
-'use client'
-import { Link } from "@nextui-org/link";
+/*import { Link } from "@nextui-org/link";
 import { Snippet } from "@nextui-org/snippet";
 import { Code } from "@nextui-org/code";
 import { button as buttonStyles } from "@nextui-org/theme";
@@ -17,3 +16,16 @@ export default function Home() {
     </section>
   );
 }
+
+*/
+
+'use client';
+
+import React from 'react';
+import MainScreen from '@/components/mainScreen';
+
+const Home: React.FC = () => {
+  return <MainScreen />;
+};
+
+export default Home;

@@ -1,172 +1,76 @@
-// components/MainScreen.tsx
-import React, { useState } from "react";
-import {
-  Button,
-  Avatar,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@nextui-org/react";
-import SoloGameScreen from "@/components/soloGameScreen";
-import FriendGameScreen from "@/components/friendGameScreen";
-import TicTacToe from "@/components/tictactoe";
+'use client';
 
-interface Score {
-  name: string;
-  score: number;
-  avatar: string;
-}
-
-const initialScores: Score[] = [
-  { name: "Alice", score: 10, avatar: "https://i.pravatar.cc/150?u=alice" },
-  { name: "Bob", score: 8, avatar: "https://i.pravatar.cc/150?u=bob" },
-  { name: "Charlie", score: 6, avatar: "https://i.pravatar.cc/150?u=charlie" },
-];
+import React, { useState } from 'react';
+import { Button, Avatar } from '@nextui-org/react';
+import SoloGameScreen from '../components/soloGameScreen';
+import FriendGameScreen from '../components/friendGameScreen';
+import { useGameContext } from '../context/GameContext';
 
 const MainScreen: React.FC = () => {
-  const [view, setView] = useState<"main" | "solo" | "friend" | "game">("main");
-  const [scores, setScores] = useState<Score[]>(initialScores);
-  const [gameProps, setGameProps] = useState<any>(null);
+  const { topScores } = useGameContext();
+  const [showSoloGame, setShowSoloGame] = useState(false);
+  const [showFriendGame, setShowFriendGame] = useState(false);
 
-  const handleStartSoloGame = (
-    playerName: string,
-    playerAvatar: string,
-    playerSymbol: "X" | "O",
-  ) => {
-    if (!scores.some((score) => score.name === playerName)) {
-      setScores([
-        ...scores,
-        { name: playerName, score: 0, avatar: playerAvatar },
-      ]);
-    }
-    setGameProps({
-      player1Name: playerName,
-      player2Name: "CPU",
-      player1Symbol: playerSymbol,
-      player2Symbol: playerSymbol === "X" ? "O" : "X",
-      player1Avatar: playerAvatar,
-      player2Avatar: "https://i.pravatar.cc/150?u=cpu", // Avatar para CPU
-      isSolo: true,
-    });
-    setView("game");
+  const handleStartSoloGame = () => {
+    setShowSoloGame(true);
+    setShowFriendGame(false);
   };
 
-  const handleStartFriendGame = (
-    player1Name: string,
-    player1Avatar: string,
-    player1Symbol: "X" | "O",
-    player2Name: string,
-    player2Avatar: string,
-    player2Symbol: "X" | "O",
-  ) => {
-    if (!scores.some((score) => score.name === player1Name)) {
-      setScores([
-        ...scores,
-        { name: player1Name, score: 0, avatar: player1Avatar },
-      ]);
-    }
-    if (!scores.some((score) => score.name === player2Name)) {
-      setScores([
-        ...scores,
-        { name: player2Name, score: 0, avatar: player2Avatar },
-      ]);
-    }
-    setGameProps({
-      player1Name: player1Name,
-      player2Name: player2Name,
-      player1Symbol: player1Symbol,
-      player2Symbol: player2Symbol,
-      player1Avatar: player1Avatar,
-      player2Avatar: player2Avatar,
-      isSolo: false,
-    });
-    setView("game");
+  const handleStartFriendGame = () => {
+    setShowFriendGame(true);
+    setShowSoloGame(false);
   };
 
-  const handleGameEnd = (winner: string | null, moves: number) => {
-    let score = 0;
-    if (moves <= 4) {
-      score = 20;
-    } else {
-      score = 13;
-    }
-    if (winner) {
-      setScores((prevScores) =>
-        prevScores.map((s) =>
-          s.name === winner ? { ...s, score: s.score + score } : s,
-        ),
-      );
-    }
+  const getTopPlayer = () => {
+    return topScores.reduce((topPlayer, player) => (player.score > topPlayer.score ? player : topPlayer), topScores[0]);
   };
 
-  const sortedScores = [...scores].sort((a, b) => b.score - a.score);
+  const topPlayer = getTopPlayer();
 
   return (
-    <div className="container">
-      {view === "main" ? (
-        <>
-          <div className="header">
-            <h1>Tres en raya</h1>
-            <h3>Top Scores</h3>
-          </div>
-          <div className="table-container">
-            <Table aria-label="Top Scores Table">
-              <TableHeader>
-                <TableColumn>Name</TableColumn>
-                <TableColumn>Score</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {sortedScores.map((score, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <Avatar src={score.avatar} alt={score.name} size="sm" />
-                        <span style={{ marginLeft: "10px" }}>{score.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{score.score}</TableCell>
-                  </TableRow>
+    <div className="screen-container flex flex-col items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold mb-6">Tres en raya</h1>
+        {!showSoloGame && !showFriendGame && (
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4 text-center">Top Scores</h2>
+            <table className="min-w-full bg-white">
+              <thead>
+                <tr>
+                  <th className="py-2">NAME</th>
+                  <th className="py-2">SCORE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topScores.map((player, index) => (
+                  <tr key={index} className="border-t">
+                    <td className="py-2 flex items-center">
+                      {player.name === topPlayer.name && (
+                        <img
+                          src="https://img.icons8.com/emoji/48/000000/crown-emoji.png"
+                          alt="crown"
+                          className="w-6 h-6 mr-2"
+                        />
+                      )}
+                      <Avatar src={player.avatar} className="mr-4" />
+                      <span className="font-medium">{player.name}</span>
+                    </td>
+                    <td className="py-2">{player.score}</td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="buttons-container">
-            <Button color="primary" onClick={() => setView("solo")}>
+              </tbody>
+            </table>
+            <Button className="w-full mb-4 bg-[#448504] hover:bg-[#336403]" onClick={handleStartSoloGame} >
               Play Solo
             </Button>
-            <Button color="secondary" onClick={() => setView("friend")}>
+            <Button className="w-full bg-[#448504] hover:bg-[#336403]" onClick={handleStartFriendGame} >
               Play a Friend
             </Button>
           </div>
-        </>
-      ) : view === "solo" ? (
-        <SoloGameScreen onStartGame={handleStartSoloGame} />
-      ) : view === "friend" ? (
-        <FriendGameScreen onStartGame={handleStartFriendGame} />
-      ) : (
-        <div>
-          <TicTacToe
-            player1Name={gameProps.player1Name}
-            player2Name={gameProps.player2Name}
-            player1Symbol={gameProps.player1Symbol}
-            player2Symbol={gameProps.player2Symbol}
-            player1Avatar={gameProps.player1Avatar}
-            player2Avatar={gameProps.player2Avatar}
-            isSolo={gameProps.isSolo}
-            onGameEnd={handleGameEnd}
-          />
-          <Button
-            color="secondary"
-            onClick={() => setView("main")}
-            style={{ marginTop: "20px" }}
-          >
-            Return to Main Screen
-          </Button>
-        </div>
-      )}
+        )}
+        {showSoloGame && <SoloGameScreen />}
+        {showFriendGame && <FriendGameScreen />}
+      </div>
     </div>
   );
 };

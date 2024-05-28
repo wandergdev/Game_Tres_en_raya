@@ -1,54 +1,43 @@
-// components/SoloGameScreen.tsx
-import React, { useState } from "react";
-import { Button, Input, Radio, RadioGroup } from "@nextui-org/react";
+'use client';
 
-interface SoloGameScreenProps {
-  onStartGame: (playerName: string, playerAvatar: string, playerSymbol: "X" | "O") => void;
-}
+import React, { useState } from 'react';
+import { Button, Input } from '@nextui-org/react';
+import TicTacToe from '../components/tictactoe';
 
-const SoloGameScreen: React.FC<SoloGameScreenProps> = ({ onStartGame }) => {
-  const [playerName, setPlayerName] = useState("");
-  const [playerAvatar, setPlayerAvatar] = useState("");
-  const [playerSymbol, setPlayerSymbol] = useState<"X" | "O">("X");
+const SoloGameScreen: React.FC = () => {
+  const [playerName, setPlayerName] = useState('');
+  const [hasStarted, setHasStarted] = useState(false);
 
-  const handleSymbolChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPlayerSymbol(event.target.value as "X" | "O");
+  const handleStartGame = () => {
+    if (playerName.trim()) {
+      setHasStarted(true);
+    }
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Tres en raya</h1>
-      <div style={{ margin: '20px 0' }}>
-        <label htmlFor="player-name">Player Name:</label>
-        <Input
-          id="player-name"
-          value={playerName}
-          onChange={(e) => setPlayerName(e.target.value)}
-          fullWidth
-        />
-      </div>
-      <div style={{ margin: '20px 0' }}>
-        <label htmlFor="player-avatar">Player Avatar URL:</label>
-        <Input
-          id="player-avatar"
-          value={playerAvatar}
-          onChange={(e) => setPlayerAvatar(e.target.value)}
-          fullWidth
-        />
-      </div>
-      <div style={{ margin: '20px 0' }}>
-        <p>Select your symbol:</p>
-        <RadioGroup value={playerSymbol} onChange={handleSymbolChange}>
-          <Radio value="X">X</Radio>
-          <Radio value="O">O</Radio>
-        </RadioGroup>
-      </div>
-      <Button
-        color="primary"
-        onClick={() => onStartGame(playerName, playerAvatar, playerSymbol)}
-      >
-        Start Game
-      </Button>
+    <div className="screen-container flex flex-col items-center justify-center bg-gray-100 p-4">
+      {!hasStarted ? (
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-6">Tres en raya</h1>
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div style={{ margin: '20px 0' }}>
+              <label htmlFor="player-name" className="text-lg font-medium mb-2 block">Player Name:</label>
+              <Input
+                id="player-name"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                fullWidth
+                placeholder="Enter your name"
+              />
+            </div>
+            <Button className="w-full bg-[#448504] hover:bg-[#336403]" onClick={handleStartGame}>
+              Start Game
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <TicTacToe player1Name={playerName} />
+      )}
     </div>
   );
 };

@@ -1,4 +1,5 @@
-import "@/styles/globals.css";
+//import "@/styles/globals.css";
+/*
 import { Metadata, Viewport } from "next";
 import { Link } from "@nextui-org/link";
 import clsx from "clsx";
@@ -66,3 +67,25 @@ export default function RootLayout({
     </html>
   );
 }
+*/
+'use client';
+
+import '../styles/globals.css';
+import { GameProvider } from '../context/GameContext';
+import { ReactNode } from 'react';
+
+interface LayoutProps {
+  children: ReactNode;
+}
+
+export default function RootLayout({ children }: LayoutProps) {
+  return (
+    <html lang="en">
+      <head />
+      <body>
+        <GameProvider>{children}</GameProvider>
+      </body>
+    </html>
+  );
+}
+

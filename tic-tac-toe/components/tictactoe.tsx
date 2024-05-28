@@ -1,61 +1,42 @@
-// components/TicTacToe.tsx
-import React, { useState, useEffect } from "react";
-import { Button, Avatar } from "@nextui-org/react";
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Button, Avatar } from '@nextui-org/react';
 
 interface TicTacToeProps {
   player1Name: string;
-  player2Name: string;
-  player1Symbol: "X" | "O";
-  player2Symbol: "X" | "O";
-  player1Avatar: string;
-  player2Avatar: string;
-  isSolo: boolean;
-  onGameEnd: (winner: string | null, moves: number) => void;
+  player2Name?: string;
 }
 
-const initialBoard = Array(9).fill(null);
-
-const TicTacToe: React.FC<TicTacToeProps> = ({
-  player1Name,
-  player2Name,
-  player1Symbol,
-  player2Symbol,
-  player1Avatar,
-  player2Avatar,
-  isSolo,
-  onGameEnd,
-}) => {
-  const [board, setBoard] = useState<(null | "X" | "O")[]>(initialBoard);
-  const [currentPlayer, setCurrentPlayer] = useState<"X" | "O">(player1Symbol);
-  const [moves, setMoves] = useState(0);
+const TicTacToe: React.FC<TicTacToeProps> = ({ player1Name, player2Name }) => {
+  const [board, setBoard] = useState(Array(9).fill(null));
+  const [isXNext, setIsXNext] = useState(true);
   const [winner, setWinner] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isSolo && currentPlayer === player2Symbol && !winner) {
-      const bestMove = calculateBestMove(board, player2Symbol, player1Symbol);
-      handleCellClick(bestMove);
-    }
-  }, [currentPlayer, isSolo, winner]);
-
-  const handleCellClick = (index: number) => {
-    if (board[index] !== null || winner) return;
-    const newBoard = board.slice();
-    newBoard[index] = currentPlayer;
-    setBoard(newBoard);
-    setMoves(moves + 1);
-    const gameWinner = calculateWinner(newBoard);
+    const gameWinner = calculateWinner(board);
     if (gameWinner) {
-      setWinner(gameWinner === player1Symbol ? player1Name : player2Name);
-      onGameEnd(gameWinner === player1Symbol ? player1Name : player2Name, moves + 1);
-    } else if (newBoard.every((cell) => cell !== null)) {
-      setWinner("Draw");
-      onGameEnd(null, moves + 1);
-    } else {
-      setCurrentPlayer(currentPlayer === "X" ? "O" : "X");
+      setWinner(gameWinner);
+    } else if (!isXNext && !player2Name) {
+      const cpuMove = getCpuMove(board);
+      if (cpuMove !== null) {
+        handleClick(cpuMove);
+      }
     }
+  }, [isXNext, board, player2Name]);
+
+  const handleClick = (index: number) => {
+    if (board[index] || winner) {
+      return;
+    }
+
+    const newBoard = board.slice();
+    newBoard[index] = isXNext ? 'X' : 'O';
+    setBoard(newBoard);
+    setIsXNext(!isXNext);
   };
 
-  const calculateWinner = (board: (null | "X" | "O")[]) => {
+  const calculateWinner = (board: Array<string | null>) => {
     const lines = [
       [0, 1, 2],
       [3, 4, 5],
@@ -66,7 +47,9 @@ const TicTacToe: React.FC<TicTacToeProps> = ({
       [0, 4, 8],
       [2, 4, 6],
     ];
-    for (const [a, b, c] of lines) {
+
+    for (let i = 0; i < lines.length; i++) {
+      const [a, b, c] = lines[i];
       if (board[a] && board[a] === board[b] && board[a] === board[c]) {
         return board[a];
       }
@@ -74,76 +57,110 @@ const TicTacToe: React.FC<TicTacToeProps> = ({
     return null;
   };
 
-  const calculateBestMove = (board: (null | "X" | "O")[], cpuSymbol: "X" | "O", playerSymbol: "X" | "O") => {
-    // Check if CPU can win
-    for (let i = 0; i < board.length; i++) {
-      if (board[i] === null) {
-        const newBoard = board.slice();
-        newBoard[i] = cpuSymbol;
-        if (calculateWinner(newBoard) === cpuSymbol) {
-          return i;
-        }
+  const getCpuMove = (board: Array<string | null>): number | null => {
+    const lines = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
+
+    // Check if CPU can win in the next move
+    for (let i = 0; i < lines.length; i++) {
+      const [a, b, c] = lines[i];
+      if (board[a] === 'O' && board[a] === board[b] && !board[c]) {
+        return c;
+      }
+      if (board[a] === 'O' && board[a] === board[c] && !board[b]) {
+        return b;
+      }
+      if (board[b] === 'O' && board[b] === board[c] && !board[a]) {
+        return a;
       }
     }
 
-    // Check if need to block player from winning
-    for (let i = 0; i < board.length; i++) {
-      if (board[i] === null) {
-        const newBoard = board.slice();
-        newBoard[i] = playerSymbol;
-        if (calculateWinner(newBoard) === playerSymbol) {
-          return i;
-        }
+    // Block player's winning move
+    for (let i = 0; i < lines.length; i++) {
+      const [a, b, c] = lines[i];
+      if (board[a] === 'X' && board[a] === board[b] && !board[c]) {
+        return c;
+      }
+      if (board[a] === 'X' && board[a] === board[c] && !board[b]) {
+        return b;
+      }
+      if (board[b] === 'X' && board[b] === board[c] && !board[a]) {
+        return a;
       }
     }
 
-    // Otherwise, make a random move
-    const availableMoves = board
-      .map((value, index) => (value === null ? index : null))
-      .filter((index) => index !== null) as number[];
-    return availableMoves[Math.floor(Math.random() * availableMoves.length)];
+    // Choose a random available move
+    const availableMoves = board.map((value, index) => value === null ? index : null).filter(value => value !== null);
+    return availableMoves.length > 0 ? availableMoves[Math.floor(Math.random() * availableMoves.length)] : null;
   };
 
-  const handleCleanBoard = () => {
-    setBoard(initialBoard);
-    setCurrentPlayer(player1Symbol);
-    setMoves(0);
-    setWinner(null);
+  let status;
+  if (winner) {
+    status = `Player ${winner === 'X' ? '1' : '2'} Wins!`;
+  } else {
+    status = `Player ${isXNext ? '1' : '2'}'s Turn`;
+  }
+
+  const renderSquare = (index: number) => {
+    return (
+      <button className={`square ${board[index]}`} onClick={() => handleClick(index)}>
+        {board[index]}
+      </button>
+    );
   };
 
   return (
-    <div className="container">
-      <h2>{`Current Player: ${currentPlayer === player1Symbol ? player1Name : player2Name} (${currentPlayer})`}</h2>
-      <div className="game-info">
-        <div className="player-info">
-          <Avatar src={player1Avatar} alt={player1Name} size="lg" className="player-avatar" />
-          <span>{player1Name} ({player1Symbol})</span>
+    <div className="screen-container flex flex-col items-center justify-center bg-gray-100 p-4">
+      <h1 className="text-4xl font-bold mb-4">Tres en raya</h1>
+      <div className="flex justify-between w-full max-w-md mb-4">
+        <div className="text-center">
+          <Avatar
+            src="https://img.icons8.com/color/48/000000/user-male-circle.png"
+            size="lg"
+          />
+          <p>{player1Name}</p>
         </div>
-        <div className="player-info">
-          <Avatar src={player2Avatar} alt={player2Name} size="lg" className="player-avatar" />
-          <span>{player2Name} ({player2Symbol})</span>
-        </div>
+        {player2Name ? (
+          <div className="text-center">
+            <Avatar
+              src="https://img.icons8.com/color/48/000000/user-female-circle.png"
+              size="lg"
+            />
+            <p>{player2Name}</p>
+          </div>
+        ) : (
+          <div className="text-center">
+            <Avatar
+              src="https://img.icons8.com/fluency/48/000000/robot.png"
+              size="lg"
+            />
+            <p>CPU</p>
+          </div>
+        )}
       </div>
-      <div className="board">
-        {board.map((cell, index) => (
-          <Button
-            key={index}
-            disabled={cell !== null || !!winner}
-            onClick={() => handleCellClick(index)}
-            style={{ width: "100px", height: "100px" }}
-          >
-            {cell}
-          </Button>
-        ))}
-      </div>
-      {winner && (
-        <div>
-          <h2>{winner === "Draw" ? "It's a Draw!" : `${winner} Won!`}</h2>
-          <Button  color="primary" onClick={handleCleanBoard} className="clean-board-button">
-            Clean Board
-          </Button>
+      <div className="bg-white rounded-lg shadow-lg p-4 w-full max-w-md">
+        <div className="status text-center text-xl font-medium mb-4">{status}</div>
+        <div className="board grid grid-cols-3 gap-4">
+          {Array(9).fill(null).map((_, i) => renderSquare(i))}
         </div>
-      )}
+        {winner ? (
+          <Button className="w-full mt-4 bg-[#448504] hover:bg-[#336403]" onClick={() => window.location.reload()} >
+            Back to Main
+          </Button>
+        ) : (
+          <Button className="w-full mt-4 bg-[#448504] hover:bg-[#336403]" onClick={() => window.location.reload()} >
+            Quit game
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
